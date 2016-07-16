@@ -10,7 +10,7 @@ import org.eclipse.jgit.lib.Repository;
 /**
   * Entrance
   */
-object CLI {
+object Entrance {
   def main(args: Array[String]) = {
     println(args.toList)
     val repoDir = new File(args(0));
@@ -23,7 +23,7 @@ object CLI {
 
     val bugFixes = walk.buggyCommits
 
-    bugFixes.map(bugfix => println(bugfix.getShortMessage))
+    bugFixes.map(bugFix => println(bugFix.getShortMessage))
 
     repository.close()
   }
@@ -39,13 +39,10 @@ object CLI {
   }
 
   def repo(repoDir: File): Repository = {
-    val builder = new FileRepositoryBuilder();
-    val repository = builder
+    new FileRepositoryBuilder()
       .setMustExist(true)
       .readEnvironment() // scan environment GIT_* variables
       .findGitDir(repoDir) // scan up the file system tree
       .build()
-    println("Having repository: " + repository.getDirectory());
-    repository
   }
 }
