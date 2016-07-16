@@ -4,8 +4,11 @@ import scala.collection.JavaConversions._
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
+import java.text.MessageFormat
 
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.diff.{DiffFormatter, RawTextComparator}
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 /**
   * Entrance
@@ -19,12 +22,8 @@ object Entrance {
     val repository: Repository = repo(repoDir)
 
     val commits = allCommits(repository)
-    val walk = new Walk(commits)
 
-    val bugFixes = walk.buggyCommits
-
-    bugFixes.map(bugFix => println(bugFix.getShortMessage))
-
+    println(new Bugspots(repository, commits).filesScore)
     repository.close()
   }
 
