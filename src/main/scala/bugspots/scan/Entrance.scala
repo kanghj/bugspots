@@ -14,25 +14,28 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
   * Entrance
   */
 object Entrance {
+  def printList(args: List[_]): Unit = {
+    args.foreach(println)
+  }
+
   def main(args: Array[String]) = {
     println(args.toList)
     val repoDir = new File(args(0));
 
     // TODO auto-closeable repository
     val repository: Repository = repo(repoDir)
-
     val commits = allCommits(repository)
 
-    println(new Bugspots(repository, commits).filesScore)
+    printList(new Bugspots(repository, commits).filesScore)
     repository.close()
   }
 
   def allCommits(repository: Repository) = {
     val revWalk = new RevWalk(repository);
     val head = repository.exactRef("refs/heads/master");
-
-    val commit = revWalk.parseCommit(head.getObjectId());
-    revWalk.markStart(commit);
+    revWalk.markStart(
+      revWalk.parseCommit(head.getObjectId())
+    );
 
     revWalk.toList
   }
@@ -40,8 +43,8 @@ object Entrance {
   def repo(repoDir: File): Repository = {
     new FileRepositoryBuilder()
       .setMustExist(true)
-      .readEnvironment() // scan environment GIT_* variables
+      .readEnvironment // scan environment GIT_* variables
       .findGitDir(repoDir) // scan up the file system tree
-      .build()
+      .build
   }
 }

@@ -16,34 +16,36 @@ class Bugspots(val repository : Repository, commits : Seq[RevCommit]) {
   val first = commits.sortBy(commit => commit.getCommitTime).head
   val current = java.lang.System.currentTimeMillis() / 1000; // in seconds
 
-  def normalisedTime(commit : RevCommit) : Long = {
-    1 - ((current - commit.getCommitTime) / (current - first.getCommitTime))
+  def normalisedTime(commit : RevCommit) : Double = {
+    1 - ((current - commit.getCommitTime).toDouble / (current - first.getCommitTime))
   }
 
-  def score(time: Long) = {
-    1/(1+Math.exp((-12*time)+12))
+  def score(time: Double) = {
+    1 / ( 1 + Math.exp((-12 * time) + 12))
   }
 
-  def affectedFiles(commit: RevCommit) = {
-    val rw = new RevWalk(repository)
+  class FilesInCommit(val commit: RevCommit) {
+    def get() = {
+      val rw = new RevWalk(repository)
 
-    val parent = rw.parseCommit(commit.getParent(0).getId())
+      val parent = rw.parseCommit(commit.getParent(0).getId())
 
-    val df = new DiffFormatter(DisabledOutputStream.INSTANCE)
-    df.setRepository(repository)
-    df.setDiffComparator(RawTextComparator.DEFAULT)
-    df.setDetectRenames(true)
+      val df = new DiffFormatter(DisabledOutputStream.INSTANCE)
+      df.setRepository(repository)
+      df.setDiffComparator(RawTextComparator.DEFAULT)
+      df.setDetectRenames(true)
 
-    df.scan(parent.getTree, commit.getTree).asScala
-      .toList
-      .map(diff => diff.getNewPath)
+      df.scan(parent.getTree, commit.getTree).asScala
+        .toList
+        .map(diff => diff.getOldPath)
+    }
   }
 
   def filesScore = {
 
     val fixedTimeWithFiles = bugfixes
       .map(fix => (fix, score(normalisedTime(fix))))
-      .map {case (fix, timeScore) => (fix, timeScore, affectedFiles(fix))}
+      .map {case (fix, timeScore) => (fix, timeScore, new FilesInCommit(fix).get())}
 
     val fileCommitScore = for (
       (fix, score, files) <- fixedTimeWithFiles;
