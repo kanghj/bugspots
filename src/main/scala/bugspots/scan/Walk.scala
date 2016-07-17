@@ -1,7 +1,8 @@
 package bugspots.scan
 
 import scala.util.matching.Regex
-import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevCommit
+import org.kohsuke.github.{GHIssueState, GHRepository, GitHub};
 
 class Walk(val commits: Seq[RevCommit]) {
 
@@ -22,7 +23,13 @@ class Walk(val commits: Seq[RevCommit]) {
     }
   }
 
-  class FromGithubIssue(val commit: RevCommit) extends IsBugFix {
+  class FromGithubIssue(val commit: RevCommit, githubName: String) extends IsBugFix {
+    def setupGithubConnection() = {
+      val github = GitHub.connect();
+      val repo = github.getRepository(githubName)
+
+      repo.getPullRequests(GHIssueState.CLOSED)
+    }
     def isBugFix() : Boolean = {
       ???
     }

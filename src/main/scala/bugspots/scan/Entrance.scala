@@ -4,7 +4,11 @@ import scala.collection.JavaConversions._
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
+import java.nio.file.{Files, Paths}
 
+import org.apache.commons.io.FileUtils
+import org.apache.commons.validator.UrlValidator
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 
 /**
@@ -36,13 +40,39 @@ object Entrance {
   def main(args: Array[String]) = {
     println(args.toList)
     // e.g. C:/Users/user/teammates
-    val repoDir = new File(args(0))
+    val location = args(0)
 
+    val isUrl = new UrlValidator().isValid(args(0))
+    if (isUrl) {
+      require(location endsWith ".git")
+
+      val localPath = Files.createTempDirectory(Paths.get(""), "BugspotClonedRepository")
+//      localPath.toFile.deleteOnExit()
+
+      val result = Git.cloneRepository()
+        .setURI(location)
+        .setDirectory(localPath.toFile)
+        .call
+
+      result.close
+      println("cloned repository")
+      printFilesAndScores(localPath.toFile)
+
+      FileUtils.deleteDirectory(localPath.toFile)
+
+    } else {
+      printFilesAndScores(new File(args(0)))
+    }
+
+  }
+
+  def printFilesAndScores(repoDir: File): Unit = {
     // TODO auto-closeable repository
     val repository: Repository = repo(repoDir)
     val commits = allCommits(repository)
 
-    printList(new Bugspots(repository, commits).filesAndScores)
+    val bugspots = new Bugspots(repository, commits)
+    printList(bugspots.filesAndScores)
     repository.close()
   }
 }
