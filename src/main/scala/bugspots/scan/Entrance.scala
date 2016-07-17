@@ -42,7 +42,7 @@ object Entrance {
     // e.g. C:/Users/user/teammates
     val location = args(0)
 
-    val isUrl = new UrlValidator().isValid(args(0))
+    val isUrl = new UrlValidator().isValid(location)
     if (isUrl) {
       require(location endsWith ".git")
 
