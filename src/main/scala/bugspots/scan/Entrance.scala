@@ -19,7 +19,7 @@ object Entrance {
     val revWalk = new RevWalk(repository);
     val head = repository.exactRef("refs/heads/master")
     revWalk.markStart(
-    revWalk.parseCommit(head.getObjectId())
+      revWalk.parseCommit(head.getObjectId())
     )
 
     revWalk.toList
