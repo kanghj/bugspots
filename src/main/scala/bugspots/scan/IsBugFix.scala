@@ -14,7 +14,7 @@ trait IsBugFix {
 }
 
 class FromCommitMessage(val commit: RevCommit) extends IsBugFix {
-  val pattern = new Regex("\\b(?i)(bug)|(fix(es|ed)?|close(s|d)?)\\b")
+  val pattern = new Regex("\\b(?i)(bug(s)?|error(s|ed)?|fail(s|ed)?|problem(s)?|patch(es|ed)?|fix(es|ed)?|close(s|d)?)\\b")
 
   def isBugFix() : Boolean = {
     val bugFixMatch = pattern findFirstIn commit.getFullMessage
