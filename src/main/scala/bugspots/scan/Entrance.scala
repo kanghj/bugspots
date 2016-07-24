@@ -66,6 +66,7 @@ object Entrance {
 
   }
 
+
   def printFilesAndScores(repoDir: File): Unit = {
     // TODO auto-closeable repository
     val repository: Repository = repo(repoDir)

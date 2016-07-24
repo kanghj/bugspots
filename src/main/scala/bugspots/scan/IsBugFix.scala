@@ -5,9 +5,6 @@ import org.kohsuke.github.{GHIssueState, GitHub}
 
 import scala.util.matching.Regex
 
-/**
-  * Created by user on 17/7/2016.
-  */
 trait IsBugFix {
   val commit: RevCommit
   def isBugFix : Boolean
