@@ -8,7 +8,11 @@ import org.eclipse.jgit.util.io.DisabledOutputStream
 
 
 class FileNamesInRevCommit(repository : Repository, commit: RevCommit) {
-  def get() = {
+  def get() : List[String] = {
+    if (commit.getParentCount <= 0) {
+      return Nil
+    }
+
     val rw = new RevWalk(repository)
 
     val parent = rw.parseCommit(commit.getParent(0).getId())

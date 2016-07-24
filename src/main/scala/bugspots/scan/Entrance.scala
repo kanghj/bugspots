@@ -26,7 +26,7 @@ object Entrance {
       revWalk.parseCommit(head.getObjectId())
     )
 
-    revWalk.toList
+    revWalk.toList map (revComment => new BSCommit(revComment, repository))
   }
 
   def repo(repoDir: File): Repository = {
