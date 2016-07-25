@@ -1,15 +1,20 @@
 package bugspots.scan
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import scala.language.implicitConversions
+import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
 import java.nio.file.{Files, Paths}
+import java.time.{Instant, LocalDate, ZoneId}
+import java.util.Date
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.validator.UrlValidator
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
+import org.kohsuke.github.{GHCommit, GHIssueState, GitHub}
 
 /**
   * Entrance
@@ -26,7 +31,7 @@ object Entrance {
       revWalk.parseCommit(head.getObjectId())
     )
 
-    revWalk.toList map (revComment => new BSCommit(revComment, repository))
+    revWalk.asScala.toList map (revComment => new BSCommit(revComment, repository))
   }
 
   def repo(repoDir: File): Repository = {
@@ -44,36 +49,69 @@ object Entrance {
 
     val isUrl = new UrlValidator().isValid(location)
     if (isUrl) {
-      require(location endsWith ".git")
-
-      val localPath = Files.createTempDirectory(Paths.get(""), "BugspotClonedRepository")
-//      localPath.toFile.deleteOnExit()
-
-      val result = Git.cloneRepository()
-        .setURI(location)
-        .setDirectory(localPath.toFile)
-        .call
-
-      result.close
-      println("cloned repository")
-      printFilesAndScores(localPath.toFile)
-
-      FileUtils.deleteDirectory(localPath.toFile)
-
+      //gitClone(location)
+      val githubName = location split("/") takeRight(2) mkString("/")
+      printFilesAndScoresForGithub(githubName)
     } else {
-      printFilesAndScores(new File(args(0)))
+      printFilesAndScoresForLocalRepo(new File(args(0)))
     }
 
   }
 
 
-  def printFilesAndScores(repoDir: File): Unit = {
+  def gitClone(location: String): Unit = {
+    require(location endsWith ".git")
+
+    val localPath = Files.createTempDirectory(Paths.get(""), "BugspotClonedRepository")
+    //      localPath.toFile.deleteOnExit()
+
+    val result = Git.cloneRepository()
+      .setURI(location)
+      .setDirectory(localPath.toFile)
+      .call
+
+    result.close
+    println("cloned repository")
+    printFilesAndScoresForLocalRepo(localPath.toFile)
+
+    FileUtils.deleteDirectory(localPath.toFile)
+  }
+
+  def printFilesAndScoresForLocalRepo(repoDir: File): Unit = {
     // TODO auto-closeable repository
-    val repository: Repository = repo(repoDir)
+    val repository = repo(repoDir)
     val commits = allCommits(repository)
 
-    val bugspots = new Bugspots(repository, commits)
-    printList(bugspots.filesAndScores)
+    printList(new Bugspots(commits).filesAndScores)
     repository.close()
+  }
+
+  def printFilesAndScoresForGithub(repoName: String) = {
+    def commitsOnGithub(n : Int = 30) : List[BSCommit] = {
+
+      val github = GitHub.connectAnonymously
+      val repo = github.getRepository(repoName)
+
+      val today = LocalDate.now
+      val nDaysAgo = today.minusDays(n)
+
+      val instant = Instant.from(nDaysAgo.atStartOfDay(ZoneId.of("GMT")))
+      val todayInstant = Instant.from(today.atStartOfDay(ZoneId.of("GMT")))
+
+      println(Date.from(instant))
+      println(Date.from(todayInstant))
+      val sample = repo.queryCommits
+                       .since(Date.from(instant))
+                       .until(Date.from(todayInstant))
+
+      sample.list.asList.asScala.toList map (ghCommit => new BSCommit(ghCommit))
+
+    }
+    println("getting commits on github")
+    val commits = commitsOnGithub(n=150)
+    println("done getting commits")
+    println(commits)
+
+    printList(new Bugspots(commits).filesAndScores)
   }
 }

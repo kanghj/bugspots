@@ -21,4 +21,8 @@ class BSCommit(val message:String, val filesAffected:Seq[String], val time: Long
       ghCommit.getCommitShortInfo.getCommitter
               .getDate.getTime / 1000)
   }
+
+  override def toString: String = {
+    return message + " at time " + time
+  }
 }

@@ -8,7 +8,7 @@ import org.eclipse.jgit.lib.Repository
 /**
   *
   */
-class Bugspots(repository : Repository, commits : Seq[BSCommit]) {
+class Bugspots( commits : Seq[BSCommit]) {
   val bugfixes = new Walk(commits).bugfixCommits
   val first = commits.sortBy(commit => commit.time).head
   val current = java.lang.System.currentTimeMillis() / 1000; // in seconds

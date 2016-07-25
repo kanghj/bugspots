@@ -23,12 +23,7 @@ class FromCommitMessage(val commit: BSCommit) extends IsBugFix {
 }
 
 class FromGithubIssue(val commit: BSCommit, githubName: String) extends IsBugFix {
-  def setupGithubConnection() = {
-    val github = GitHub.connect();
-    val repo = github.getRepository(githubName)
 
-    repo.getPullRequests(GHIssueState.CLOSED)
-  }
   def isBugFix() : Boolean = {
     ???
   }
